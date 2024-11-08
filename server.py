@@ -1,6 +1,7 @@
 import os
 import subprocess
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -28,16 +29,27 @@ def process():
             stderr=subprocess.PIPE
         )
 
-        # Return the process output or error
-        if process.returncode == 0:
-            return jsonify({"message": "Success", "output": process.stdout.decode('utf-8')}), 200
-        else:
-            print(f"Error: {process.stderr.decode('utf-8')}")
+        # Check for errors
+        if process.returncode != 0:
             return jsonify({"message": "Error", "error": process.stderr.decode('utf-8')}), 500
+
+        # Check if the output file exists
+        output_file_path = '/output/output.json'
+        if not os.path.exists(output_file_path):
+            return jsonify({"message": "Error", "error": "Output file not found"}), 500
+
+        # Return the output file as a downloadable file
+        return send_file(
+            output_file_path,
+            as_attachment=True,
+            download_name='output.json',
+            mimetype='application/json'
+        )
 
     except Exception as e:
         print(f"Exception: {str(e)}")
         return jsonify({"message": "Error", "error": str(e)}), 400
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
