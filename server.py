@@ -1,12 +1,18 @@
 import os
 import subprocess
-from flask import Flask, request, jsonify, send_file
-from io import BytesIO
+from flask import Flask, request, jsonify
+from google.cloud import storage
 
 app = Flask(__name__)
 
-# Ensure the output directory exists
-os.makedirs("/output", exist_ok=True)
+# Initialize the Google Cloud Storage client
+client = storage.Client()
+bucket_name = 'ls_gunicorn_bucket'
+bucket = client.bucket(bucket_name)
+
+# Ensure the output directory exists within the working directory
+output_dir = './output'
+os.makedirs(output_dir, exist_ok=True)
 
 @app.route('/process', methods=['POST'])
 def process():
@@ -15,45 +21,54 @@ def process():
         instructions_file = request.files['instructions']
         layout_file = request.files['layout']
         
-        # Save the uploaded files to the container
+        # Extract base names without extensions
+        instructions_name = os.path.splitext(instructions_file.filename)[0]
+        layout_name = os.path.splitext(layout_file.filename)[0]
+        
+        # Create a combined output filename
+        output_filename = f"{instructions_name}_{layout_name}.json"
+        output_file_path = os.path.join(output_dir, output_filename)
+        
+        # Save the uploaded files to the working directory
         instructions_path = './instructions.txt'
         layout_path = './layout.txt'
-        
         instructions_file.save(instructions_path)
         layout_file.save(layout_path)
 
-        # Run lsqecc_slicer with the provided input files
+        # Run lsqecc_slicer with the provided input files and dynamic output filename
         process = subprocess.run(
-            ['./lsqecc_slicer', '-i', instructions_path, '-l', layout_path, '-o', '/output/output.json'],
+            ['./lsqecc_slicer', '-i', instructions_path, '-l', layout_path, '-o', output_file_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
 
+        # Capture stdout and stderr for debugging
+        stdout = process.stdout.decode('utf-8')
+        stderr = process.stderr.decode('utf-8')
+        print("lsqecc_slicer stdout:", stdout)
+        print("lsqecc_slicer stderr:", stderr)
+
         # Check for errors
         if process.returncode != 0:
-            return jsonify({"message": "Error", "error": process.stderr.decode('utf-8')}), 500
+            return jsonify({"message": "Error", "error": stderr}), 500
 
         # Check if the output file exists
-        output_file_path = '/output/output.json'
         if not os.path.exists(output_file_path):
             return jsonify({"message": "Error", "error": "Output file not found"}), 500
 
-        # Return the output file as a downloadable file
-        return send_file(
-            output_file_path,
-            as_attachment=True,
-            download_name='output.json',
-            mimetype='application/json'
-        )
+        # Upload the output file to Google Cloud Storage
+        blob = bucket.blob(f'output/{output_filename}')
+        blob.upload_from_filename(output_file_path)
+
+        # Return a success message with the file URL
+        return jsonify({
+            "message": "Success",
+            "file_url": f"gs://{bucket_name}/output/{output_filename}"
+        }), 200
 
     except Exception as e:
         print(f"Exception: {str(e)}")
         return jsonify({"message": "Error", "error": str(e)}), 400
 
-
 if __name__ == '__main__':
-    # Get the port from the environment variable or default to 8080
-    # port = int(os.environ.get("PORT", 8080))
-
-    # app.run(host='0.0.0.0', port=port)
     pass

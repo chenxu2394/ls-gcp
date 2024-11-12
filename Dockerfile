@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y \
     cmake \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Flask and Gunicorn to serve HTTP requests
-RUN pip install flask gunicorn
+# Install Flask, Gunicorn, and Google Cloud Storage client library
+RUN pip install flask gunicorn google-cloud-storage
 
 # Clone the liblsqecc repository
 RUN git clone --recursive https://github.com/latticesurgery-com/liblsqecc.git
