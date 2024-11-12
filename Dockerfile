@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y \
     cmake \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Flask to serve HTTP requests
-RUN pip install flask
+# Install Flask and Gunicorn to serve HTTP requests
+RUN pip install flask gunicorn
 
 # Clone the liblsqecc repository
 RUN git clone --recursive https://github.com/latticesurgery-com/liblsqecc.git
@@ -19,13 +19,13 @@ WORKDIR /liblsqecc
 RUN mkdir build && cd build && cmake .. && make
 
 # Copy the Python server script into the container
-COPY server.py /server.py
+COPY server.py /liblsqecc/build/server.py
 
 # Expose port 8080
 EXPOSE 8080
 
-# Set the working directory to where the executable is
+# Set the working directory to where the executable and server script are
 WORKDIR /liblsqecc/build
 
-# Start the HTTP server
-CMD ["python", "/server.py"]
+# Start Gunicorn server
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "server:app"]
