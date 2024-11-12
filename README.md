@@ -2,6 +2,12 @@
 
 ## Instructions
 
+### 0. Creat a Google Cloud Storage Bucket
+
+```bash
+gsutil mb gs://[bucket_name]
+```
+
 ### 1. Build the docker image using linux/amd64 and push it to the google artifact registry
 
 ```bash
@@ -19,19 +25,34 @@ gcloud run deploy ls-gunicorn \
   --region us-central1
 ```
 
-## 3. Get the URL of the deployed service
+### 3. Get the service account email
+
+```bash
+gcloud run services describe ls-gunicorn \
+  --platform managed \
+  --region us-central1 \
+  --format 'value(spec.template.spec.serviceAccountName)'
+```
+
+### 4. Grant the Storage Object Creator role
+
+```bash
+gsutil iam ch serviceAccount:[service-account-email]:roles/storage.objectCreator gs://[bucket-name]
+```
+
+## 5. Get the URL of the deployed service
 
 ```bash
 gcloud run services describe ls-gunicorn --platform managed --region us-central1 --format 'value(status.url)'
 ```
 
-## 4. Get the token to authenticate the service
+## 6. Get the token to authenticate the service
 
 ```bash
 TOKEN=$(gcloud auth print-identity-token)
 ```
 
-## 5. Test the service
+## 7. Test the service
 
 ```bash
 curl -X POST \
@@ -40,3 +61,5 @@ curl -X POST \
   -F "layout=@$(pwd)/layout.txt" \
   [url]/process
 ```
+
+The response will be saved to the bucket with the name `instructions_layout.txt`
