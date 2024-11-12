@@ -5,7 +5,9 @@
 ### 1. Build the docker image using linux/amd64 and push it to the google artifact registry
 
 ```bash
-docker buildx build --platform linux/amd64 -t gcr.io/[project_id]/ls_image:latest --push .
+docker buildx build --platform linux/amd64 -t ls_gunicorn --load .
+docker tag ls_gunicorn gcr.io/[project_id]/ls_gunicorn
+docker push gcr.io/[project_id]/ls_gunicorn
 ```
 
 ### 2. Deploy the image to google cloud run
@@ -14,14 +16,13 @@ docker buildx build --platform linux/amd64 -t gcr.io/[project_id]/ls_image:lates
 gcloud run deploy ls-image \
   --image gcr.io/[project_id]/ls_image:latest \
   --platform managed \
-  --region us-central1 \
-  --port 8080
+  --region us-central1
 ```
 
 ## 3. Get the URL of the deployed service
 
 ```bash
-gcloud run services describe ls-image --platform managed --region us-central1 --format 'value(status.url)'
+gcloud run services describe ls-gunicorn --platform managed --region us-central1 --format 'value(status.url)'
 ```
 
 ## 4. Get the token to authenticate the service
