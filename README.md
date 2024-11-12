@@ -13,7 +13,7 @@ docker push gcr.io/[project_id]/ls_gunicorn
 ### 2. Deploy the image to google cloud run
 
 ```bash
-gcloud run deploy ls-image \
+gcloud run deploy ls-gunicorn \
   --image gcr.io/[project_id]/ls_image:latest \
   --platform managed \
   --region us-central1
