@@ -62,4 +62,4 @@ curl -X POST \
   [url]/process
 ```
 
-The response will be saved to the bucket with the name `instructions_layout.txt`
+The response will be saved to the bucket with the name `instructions_layout.json`
