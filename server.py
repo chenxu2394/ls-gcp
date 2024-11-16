@@ -1,14 +1,22 @@
 import os
 import subprocess
-from flask import Flask, request, jsonify
-from google.cloud import storage
+import logging
+from flask import Flask, request, jsonify, send_file
 
 app = Flask(__name__)
 
-# Initialize the Google Cloud Storage client
-client = storage.Client()
-bucket_name = 'ls_gunicorn_bucket'
-bucket = client.bucket(bucket_name)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+# Determine whether to use Google Cloud Storage
+USE_GCS = os.environ.get('USE_GCS', 'False').lower() == 'true'
+
+if USE_GCS:
+    from google.cloud import storage
+    # Initialize the Google Cloud Storage client
+    client = storage.Client()
+    bucket_name = os.environ.get('BUCKET_NAME', 'ls_gunicorn_bucket')  # Parameterize the bucket name with default value
+    bucket = client.bucket(bucket_name)
 
 # Ensure the output directory exists within the working directory
 output_dir = './output'
@@ -39,14 +47,15 @@ def process():
         process = subprocess.run(
             ['./lsqecc_slicer', '-i', instructions_path, '-l', layout_path, '-o', output_file_path],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            timeout=300  # Timeout in seconds
         )
 
         # Capture stdout and stderr for debugging
         stdout = process.stdout.decode('utf-8')
         stderr = process.stderr.decode('utf-8')
-        print("lsqecc_slicer stdout:", stdout)
-        print("lsqecc_slicer stderr:", stderr)
+        logging.info("lsqecc_slicer stdout: %s", stdout)
+        logging.error("lsqecc_slicer stderr: %s", stderr)
 
         # Check for errors
         if process.returncode != 0:
@@ -56,18 +65,28 @@ def process():
         if not os.path.exists(output_file_path):
             return jsonify({"message": "Error", "error": "Output file not found"}), 500
 
-        # Upload the output file to Google Cloud Storage
-        blob = bucket.blob(f'output/{output_filename}')
-        blob.upload_from_filename(output_file_path)
+        if USE_GCS:
+            # Upload the output file to Google Cloud Storage
+            blob = bucket.blob(f'output/{output_filename}')
+            blob.upload_from_filename(output_file_path)
 
-        # Return a success message with the file URL
-        return jsonify({
-            "message": "Success",
-            "file_url": f"gs://{bucket_name}/output/{output_filename}"
-        }), 200
-
+            # Return a success message with the file URL
+            return jsonify({
+                "message": "Success",
+                "file_url": f"gs://{bucket_name}/output/{output_filename}"
+            }), 200
+        else:
+            # Read the output file content
+            with open(output_file_path, 'r') as f:
+                output_data = f.read()
+            # Return the output data as a JSON response
+            return app.response_class(
+                response=output_data,
+                status=200,
+                mimetype='application/json'
+            )
     except Exception as e:
-        print(f"Exception: {str(e)}")
+        logging.exception("Exception occurred during processing")
         return jsonify({"message": "Error", "error": str(e)}), 400
 
 if __name__ == '__main__':

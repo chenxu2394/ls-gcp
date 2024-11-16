@@ -8,8 +8,11 @@ RUN apt-get update && apt-get install -y \
     cmake \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Flask, Gunicorn, and Google Cloud Storage client library
-RUN pip install flask gunicorn google-cloud-storage
+# Install Flask and Gunicorn
+RUN pip install flask gunicorn
+
+# Install Google Cloud Storage client library
+RUN pip install google-cloud-storage
 
 # Clone the liblsqecc repository
 RUN git clone --recursive https://github.com/latticesurgery-com/liblsqecc.git
@@ -27,5 +30,9 @@ EXPOSE 8080
 # Set the working directory to where the executable and server script are
 WORKDIR /liblsqecc/build
 
-# Start Gunicorn server
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "server:app"]
+# Set default environment variables
+ENV USE_GCS=False
+
+# Start Gunicorn server with increased timeout and log settings
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "300", "--access-logfile", "-", "--error-logfile", "-", "server:app"]
+
