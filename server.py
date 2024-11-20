@@ -1,7 +1,7 @@
 import os
 import subprocess
 import logging
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -10,6 +10,9 @@ logging.basicConfig(level=logging.INFO)
 
 # Determine whether to use Google Cloud Storage
 USE_GCS = os.environ.get('USE_GCS', 'False').lower() == 'true'
+
+# Determine whether to suppress output
+NO_SLICES = os.environ.get('NO_SLICES', 'False').lower() == 'true'
 
 if USE_GCS:
     from google.cloud import storage
@@ -43,9 +46,16 @@ def process():
         instructions_file.save(instructions_path)
         layout_file.save(layout_path)
 
-        # Run lsqecc_slicer with the provided input files and dynamic output filename
+        # Build the command
+        cmd = ['./lsqecc_slicer', '-i', instructions_path, '-l', layout_path]
+        if NO_SLICES:
+            cmd.append('--noslices')  # Suppress output generation
+        else:
+            cmd.extend(['-o', output_file_path])  # Specify output file
+
+        # Run lsqecc_slicer with the provided input files
         process = subprocess.run(
-            ['./lsqecc_slicer', '-i', instructions_path, '-l', layout_path, '-o', output_file_path],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=300  # Timeout in seconds
@@ -54,37 +64,41 @@ def process():
         # Capture stdout and stderr for debugging
         stdout = process.stdout.decode('utf-8')
         stderr = process.stderr.decode('utf-8')
-        logging.info("lsqecc_slicer stdout: %s", stdout)
-        logging.error("lsqecc_slicer stderr: %s", stderr)
+        logging.info("lsqecc_slicer stdout:\n%s", stdout)
+        logging.error("lsqecc_slicer stderr:\n%s", stderr)
 
         # Check for errors
         if process.returncode != 0:
             return jsonify({"message": "Error", "error": stderr}), 500
 
-        # Check if the output file exists
-        if not os.path.exists(output_file_path):
-            return jsonify({"message": "Error", "error": "Output file not found"}), 500
-
-        if USE_GCS:
-            # Upload the output file to Google Cloud Storage
-            blob = bucket.blob(f'output/{output_filename}')
-            blob.upload_from_filename(output_file_path)
-
-            # Return a success message with the file URL
-            return jsonify({
-                "message": "Success",
-                "file_url": f"gs://{bucket_name}/output/{output_filename}"
-            }), 200
+        if NO_SLICES:
+            # If NO_SLICES is true, return a simple success message
+            return jsonify({"message": "Success"}), 200
         else:
-            # Read the output file content
-            with open(output_file_path, 'r') as f:
-                output_data = f.read()
-            # Return the output data as a JSON response
-            return app.response_class(
-                response=output_data,
-                status=200,
-                mimetype='application/json'
-            )
+            # Check if the output file exists
+            if not os.path.exists(output_file_path):
+                return jsonify({"message": "Error", "error": "Output file not found"}), 500
+
+            if USE_GCS:
+                # Upload the output file to Google Cloud Storage
+                blob = bucket.blob(f'output/{output_filename}')
+                blob.upload_from_filename(output_file_path)
+
+                # Return a success message with the file URL
+                return jsonify({
+                    "message": "Success",
+                    "file_url": f"gs://{bucket_name}/output/{output_filename}"
+                }), 200
+            else:
+                # Read the output file content
+                with open(output_file_path, 'r') as f:
+                    output_data = f.read()
+                # Return the output data as a JSON response
+                return app.response_class(
+                    response=output_data,
+                    status=200,
+                    mimetype='application/json'
+                )
     except Exception as e:
         logging.exception("Exception occurred during processing")
         return jsonify({"message": "Error", "error": str(e)}), 400

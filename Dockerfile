@@ -32,6 +32,7 @@ WORKDIR /liblsqecc/build
 
 # Set default environment variables
 ENV USE_GCS=False
+ENV NO_SLICES=False
 
 # Start Gunicorn server with increased timeout and log settings
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "300", "--access-logfile", "-", "--error-logfile", "-", "server:app"]
