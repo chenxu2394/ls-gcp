@@ -106,3 +106,17 @@ curl -X POST \
 ```
 
 The response will contain the `gs://` URL of the output file, which will be saved to the bucket with the name `instructions_layout.json`
+
+## Run Stress Test using Vegeta
+
+```bash
+% vegeta attack -duration=10s -rate=200 -targets=targets.txt -body=body.txt -header "Authorization: Bearer $TOKEN" | vegeta report
+Requests      [total, rate, throughput]         2000, 200.10, 196.50
+Duration      [total, attack, wait]             10.178s, 9.995s, 182.66ms
+Latencies     [min, mean, 50, 90, 95, 99, max]  162.161ms, 195.629ms, 186.283ms, 228.126ms, 260.616ms, 325.499ms, 401.842ms
+Bytes In      [total, mean]                     6832000, 3416.00
+Bytes Out     [total, mean]                     974000, 487.00
+Success       [ratio]                           100.00%
+Status Codes  [code:count]                      200:2000
+Error Set:
+```
