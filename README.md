@@ -110,13 +110,16 @@ The response will contain the `gs://` URL of the output file, which will be save
 ## Run Stress Test using Vegeta
 
 ```bash
-% vegeta attack -duration=10s -rate=200 -targets=targets.txt -body=body.txt -header "Authorization: Bearer $TOKEN" | vegeta report
-Requests      [total, rate, throughput]         2000, 200.10, 196.50
-Duration      [total, attack, wait]             10.178s, 9.995s, 182.66ms
-Latencies     [min, mean, 50, 90, 95, 99, max]  162.161ms, 195.629ms, 186.283ms, 228.126ms, 260.616ms, 325.499ms, 401.842ms
-Bytes In      [total, mean]                     6832000, 3416.00
-Bytes Out     [total, mean]                     974000, 487.00
+% echo "POST $URL/process" | vegeta attack -duration=100s -rate=1000 \
+  -body=body.txt \
+  -header "Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW" \
+  -header "Authorization: Bearer $TOKEN" | vegeta report
+Requests      [total, rate, throughput]         100000, 1000.01, 998.31
+Duration      [total, attack, wait]             1m40s, 1m40s, 170.153ms
+Latencies     [min, mean, 50, 90, 95, 99, max]  143.819ms, 162.251ms, 159.191ms, 170.287ms, 177.3ms, 211.162ms, 1.647s
+Bytes In      [total, mean]                     2200000, 22.00
+Bytes Out     [total, mean]                     48700000, 487.00
 Success       [ratio]                           100.00%
-Status Codes  [code:count]                      200:2000
+Status Codes  [code:count]                      200:100000
 Error Set:
 ```

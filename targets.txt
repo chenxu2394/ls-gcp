@@ -1,2 +1,0 @@
-POST https://ls-gunicorn-json-res-4hv6fcqvzq-uc.a.run.app/process
-Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
