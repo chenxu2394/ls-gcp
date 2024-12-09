@@ -59,7 +59,7 @@ def process():
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            timeout=300  # Timeout in seconds
+            timeout=5  # Timeout in seconds
         )
 
         # Capture stdout and stderr for debugging
