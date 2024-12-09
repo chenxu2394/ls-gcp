@@ -2,6 +2,7 @@ import os
 import subprocess
 import logging
 from flask import Flask, request, jsonify
+from utils import *
 
 app = Flask(__name__)
 
@@ -71,9 +72,11 @@ def process():
         if process.returncode != 0:
             return jsonify({"message": "Error", "error": stderr}), 500
 
+        # If no errors while computing
         if NO_SLICES:
             # If NO_SLICES is true, return a simple success message
-            return jsonify({"message": "Success"}), 200
+            result = parse_stdout(stdout)
+            return jsonify({"message": "Success", "result": result}), 200
         else:
             # Check if the output file exists
             if not os.path.exists(output_file_path):

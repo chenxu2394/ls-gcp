@@ -23,6 +23,7 @@ RUN mkdir build && cd build && cmake .. && make
 
 # Copy the Python server script into the container
 COPY server.py /liblsqecc/build/server.py
+COPY utils.py /liblsqecc/build/utils.py
 
 # Expose port 8080
 EXPOSE 8080
