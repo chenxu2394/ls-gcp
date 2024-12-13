@@ -23,7 +23,7 @@ docker build -t ls_gunicorn_local .
 #### 2. Run the Docker Image
 
 ```bash
-docker run -p 8080:8080 -e USE_GCS=False ls_gunicorn_local
+docker run -p 8080:8080 -e USE_GCS=False -e NO_SLICES=True ls_gunicorn_local
 ```
 
 #### 3. Test the Service
