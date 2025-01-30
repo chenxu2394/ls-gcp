@@ -48,7 +48,7 @@ def process():
         layout_file.save(layout_path)
 
         # Build the command
-        cmd = ['./lsqecc_slicer', '-i', instructions_path, '-l', layout_path]
+        cmd = ['./lsqecc_slicer', '-q', '-i', instructions_path, '-l', layout_path]
         if NO_SLICES:
             cmd.append('--noslices')  # Suppress output generation
         else:
@@ -59,7 +59,7 @@ def process():
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            timeout=5  # Timeout in seconds
+            timeout=2  # Timeout in seconds
         )
 
         # Capture stdout and stderr for debugging
