@@ -47,8 +47,12 @@ def process():
         instructions_file.save(instructions_path)
         layout_file.save(layout_path)
 
-        # Build the command
+        # ls format
+        # cmd = ['./lsqecc_slicer', '-i', instructions_path, '-l', layout_path]
+
+        #qasm format
         cmd = ['./lsqecc_slicer', '-q', '-i', instructions_path, '-l', layout_path]
+
         if NO_SLICES:
             cmd.append('--noslices')  # Suppress output generation
         else:
