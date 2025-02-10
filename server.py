@@ -42,16 +42,17 @@ def process():
         output_file_path = os.path.join(output_dir, output_filename)
         
         # Save the uploaded files to the working directory
-        instructions_path = './instructions.txt'
-        layout_path = './layout.txt'
+        instructions_path = os.path.join(output_dir, 'instructions.txt')
+        layout_path = os.path.join(output_dir, 'layout.txt')
+
         instructions_file.save(instructions_path)
         layout_file.save(layout_path)
 
-        # ls format
-        # cmd = ['./lsqecc_slicer', '-i', instructions_path, '-l', layout_path]
+        if instructions_file.filename.lower().endswith('qasm'):
+            cmd = ['./lsqecc_slicer', '-q', '-i', instructions_path, '-l', layout_path]
+        else:
+            cmd = ['./lsqecc_slicer', '-i', instructions_path, '-l', layout_path]
 
-        #qasm format
-        cmd = ['./lsqecc_slicer', '-q', '-i', instructions_path, '-l', layout_path]
 
         if NO_SLICES:
             cmd.append('--noslices')  # Suppress output generation
@@ -59,7 +60,7 @@ def process():
             cmd.extend(['-o', output_file_path])  # Specify output file
 
         # Run lsqecc_slicer with the provided input files
-        process = subprocess.run(
+        proc = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -67,13 +68,13 @@ def process():
         )
 
         # Capture stdout and stderr for debugging
-        stdout = process.stdout.decode('utf-8')
-        stderr = process.stderr.decode('utf-8')
+        stdout = proc.stdout.decode('utf-8')
+        stderr = proc.stderr.decode('utf-8')
         logging.info("lsqecc_slicer stdout:\n%s", stdout)
         logging.error("lsqecc_slicer stderr:\n%s", stderr)
 
         # Check for errors
-        if process.returncode != 0:
+        if proc.returncode != 0:
             return jsonify({"message": "Error", "error": stderr}), 500
 
         # If no errors while computing
