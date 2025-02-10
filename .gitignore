@@ -1,1 +1,4 @@
 output.json
+/output
+*.sif
+__pycache__
