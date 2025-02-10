@@ -123,3 +123,32 @@ Success       [ratio]                           100.00%
 Status Codes  [code:count]                      200:100000
 Error Set:
 ```
+
+## Run on Ubuntu with apptainer
+
+### 1. Build the docker image using linux/amd64
+
+```bash
+docker build -t ls-gcp .
+```
+
+### 2. Build an apptainer sif file
+
+```bash
+apptainer build ls-gcp.sif docker-daemon://ls-gcp:latest
+```
+
+### 3. Run the apptainer sif file
+
+```bash
+apptainer run --writable-tmpfs --env NO_SLICES=True ls-gcp.sif
+```
+
+### 4. Test the service
+
+Because apptainer share the same network with the host machine, we can send the request to the service using the host machine
+
+```bash
+curl -X POST -F "instructions=@$(pwd)/ZXCNOTDemo.qasm" -F "layout=@$(pwd)/layout.txt" http://localhost:8080/process
+curl -X POST -F "instructions=@$(pwd)/instructions.txt" -F "layout=@$(pwd)/layout.txt" http://localhost:8080/process
+```
