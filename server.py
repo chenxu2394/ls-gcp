@@ -34,7 +34,7 @@ def process():
         layout_file = request.files['layout']
         
         # Extract base names without extensions
-        instructions_name = os.path.splitext(instructions_file.filename)[0]
+        instructions_name, ext = os.path.splitext(instructions_file.filename)
         layout_name = os.path.splitext(layout_file.filename)[0]
         
         # Create a combined output filename
@@ -42,8 +42,8 @@ def process():
         output_file_path = os.path.join(output_dir, output_filename)
         
         # Save the uploaded files to the working directory
-        instructions_path = os.path.join(output_dir, 'instructions.txt')
-        layout_path = os.path.join(output_dir, 'layout.txt')
+        instructions_path = os.path.join(output_dir, instructions_file.filename)
+        layout_path = os.path.join(output_dir, layout_file.filename)
 
         instructions_file.save(instructions_path)
         layout_file.save(layout_path)

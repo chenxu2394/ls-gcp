@@ -95,7 +95,7 @@ def main():
         start=1
     ):
         files = {
-            "instructions": ("instructions.txt", instructions_data, "text/plain"),
+            "instructions": (instructions_file, instructions_data, "text/plain"),
             "layout": ("layout.txt", layout_string, "text/plain"),
         }
 
