@@ -3,3 +3,4 @@ output.json
 *.sif
 __pycache__
 *.out
+venv
