@@ -5,4 +5,4 @@
 #SBATCH --account project_2012524
 #SBATCH --partition medium
 
-bash batch_hpc.sh
+srun batch_hpc.sh
